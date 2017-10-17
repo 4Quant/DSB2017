@@ -1,3 +1,43 @@
+import pandas as pd
+import pdb
+import numpy as np
+from keras.models import Model, load_model
+from keras.layers import Input, Lambda, Dense, Flatten, Reshape, merge, Highway, Activation,Dropout
+from keras.layers.convolutional import Convolution3D
+from keras.layers.pooling import GlobalMaxPooling3D, MaxPooling3D, AveragePooling3D,GlobalAveragePooling3D
+from keras.layers.normalization import BatchNormalization
+from keras.layers.noise import GaussianDropout
+from keras.optimizers import Adamax, Adam, Nadam
+from keras.layers.advanced_activations import ELU,PReLU,LeakyReLU
+from keras import backend as K
+from sklearn.preprocessing import LabelBinarizer
+from keras.regularizers import l2
+from pylab import imshow, show
+try:
+    import cPickle as pickle
+except:
+    import pickle
+from keras.preprocessing.image import ImageDataGenerator
+from keras.models import load_model
+import os
+from keras.callbacks import ModelCheckpoint,ReduceLROnPlateau,LearningRateScheduler
+from sklearn.metrics import accuracy_score, log_loss,roc_auc_score
+from sklearn.linear_model import LogisticRegression
+import numpy as np # linear algebra
+import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
+import pydicom as dicom
+import os
+import scipy.ndimage
+import matplotlib.pyplot as plt
+from joblib import Parallel, delayed
+from skimage import measure, morphology
+import SimpleITK as sitk
+from PIL import Image
+from scipy import ndimage
+import threading
+from multiprocessing import Process
+#import data_generator_fn
+from keras.regularizers import l2
 
 def conv_block(x_input, num_filters,pool=True,norm=False,drop_rate=0.0):
 	
@@ -97,7 +137,7 @@ def build_model(input_shape):
 	
 		
 	opt = Nadam(lr_start,clipvalue=1.0)
-	print 'compiling model'
+	print('compiling model')
 
 	model.compile(optimizer=opt,loss={'o_d':'mse', 'o_lob':'binary_crossentropy', 'o_spic':'binary_crossentropy', 
 										'o_mal':'binary_crossentropy', 'o_fp':'categorical_crossentropy'},
@@ -291,10 +331,10 @@ def train_model_on_stage(stage,model,fast_start=False):
 		data_gen_process = Process(target=data_generator_fn.main,args=[stage,np.random.randint(0,10000)])
 		data_gen_process.start()
 		
-		print 'waiting for data generator process to finish first chunk'
+		print('waiting for data generator process to finish first chunk')
 		while data_gen_process.is_alive():
 			time.sleep(1)
-	print 'starting training'
+	print('starting training')
 	
 	# assert split == True, 'TODO: write code for no split'
 	
@@ -343,7 +383,7 @@ def train_model_on_stage(stage,model,fast_start=False):
 		nb_epoch=15
 		samples_per_epoch = 150
 		
-	print 'restarting data gen process'
+	print('restarting data gen process')
 	data_gen_process = Process(target=data_generator_fn.main,args=[stage,np.random.randint(0,10000)])
 	data_gen_process.start()
 	
@@ -351,7 +391,6 @@ def train_model_on_stage(stage,model,fast_start=False):
 		#check after each epoch if the data is done and if so reload it
 		if not data_gen_process.is_alive():
 			#reload data
-			print 'RELOADING DATA'
 			if split:
 				del Xtrain1, Xtrain2, Xvalid1, Xvalid2
 				Xpos = np.load(r"D:\Dlung\Xpositive_temp_v5.npy")
@@ -390,9 +429,8 @@ def train_model_on_stage(stage,model,fast_start=False):
 			data_gen_process = Process(target=data_generator_fn.main,args=[stage,np.random.randint(0,10000)])
 			data_gen_process.start()
 		else:
-			print 'data generator still running'
+			pass
 			
-		print 'epoch', epoch, 'model lr', model.optimizer.lr.get_value()
 		if split:
 			model.fit_generator(train_generator_75,samples_per_epoch=samples_per_epoch*batch_size, nb_epoch=epoch+1,callbacks=[chkp,lr_schedule],
 								validation_data=valid_generator_75, nb_val_samples=samples_per_epoch*batch_size/2,initial_epoch=epoch)
@@ -404,47 +442,8 @@ def train_model_on_stage(stage,model,fast_start=False):
 	return model
 		
 if __name__ == '__main__':
-
-	import pandas as pd
-	import pdb
-	import numpy as np
-	from keras.models import Model, load_model
-	from keras.layers import Input, Lambda, Dense, Flatten, Reshape, merge, Highway, Activation,Dropout
-	from keras.layers.convolutional import Convolution3D
-	from keras.layers.pooling import GlobalMaxPooling3D, MaxPooling3D, AveragePooling3D,GlobalAveragePooling3D
-	from keras.layers.normalization import BatchNormalization
-	from keras.layers.noise import GaussianDropout
-	from keras.optimizers import Adamax, Adam, Nadam
-	from keras.layers.advanced_activations import ELU,PReLU,LeakyReLU
-	from keras import backend as K
-	from sklearn.preprocessing import LabelBinarizer
-	from keras.regularizers import l2
-	from pylab import imshow, show
-	import cPickle as pickle
-	from keras.preprocessing.image import ImageDataGenerator
-	from keras.models import load_model
-	import os
-	from keras.callbacks import ModelCheckpoint,ReduceLROnPlateau,LearningRateScheduler
-	from sklearn.metrics import accuracy_score, log_loss,roc_auc_score
-	from sklearn.linear_model import LogisticRegression
-	import numpy as np # linear algebra
-	import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
-	import pydicom as dicom
-	import os
-	import scipy.ndimage
-	import matplotlib.pyplot as plt
-	from joblib import Parallel, delayed
-	from skimage import measure, morphology
-	import SimpleITK as sitk
-	from PIL import Image
-	from scipy import ndimage
-	import threading
-	from multiprocessing import Process
-	import data_generator_fn
-	from keras.regularizers import l2
 	
 	np.random.seed(21345)
-	print 'loading data'
 	
 	stages = [32, 64, 128, 256]
 	
@@ -511,6 +510,4 @@ if __name__ == '__main__':
 		
 	
 	#ok. now let's use this model to initialize the bigger ones
-	
-	
-	print 'done.'
+
